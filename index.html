@@ -449,7 +449,7 @@ html, body {
 .history-stat .stat-value { font-size: 1.1rem; }
 
 .chart-container { width: 100%; background: var(--bg-card); border-radius: var(--radius); padding: 12px; }
-canvas { width: 100%; height: 160px; }
+.chart-container canvas { width: 100%; height: 160px; display: block; }
 
 .session-list { width: 100%; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 .session-item {
@@ -689,12 +689,12 @@ const AudioEngine = {
 
 // ===== CONSTANTS =====
 const LEVELS = {
-  1: { label: '1–5', min: 1, max: 5 },
-  2: { label: '1–10', min: 1, max: 10 },
-  3: { label: '1–12', min: 1, max: 12 },
-  4: { label: '1–15', min: 1, max: 15 },
-  5: { label: '1–20', min: 1, max: 20 },
-  6: { label: 'Multi', min: 1, max: 20, multi: true }
+  1: { label: 'Warm Up (1–6)', min: 1, max: 6 },
+  2: { label: 'Standard (1–10)', min: 1, max: 10 },
+  3: { label: 'Tables (1–12)', min: 1, max: 12 },
+  4: { label: 'Challenge (1–15)', min: 1, max: 15 },
+  5: { label: 'Beast (1–20)', min: 1, max: 20 },
+  6: { label: 'Multi-Digit', min: 1, max: 20, multi: true }
 };
 
 const PLAYERS = {
@@ -810,15 +810,32 @@ function applyTheme(t) {
 // ===== HELPERS =====
 function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-function generateProblem(op, level) {
+function getProgressiveRange(level, attempted) {
+  // Within a session, ramp difficulty based on how many problems answered
   const L = LEVELS[level];
+  if (L.multi) return L; // Multi-digit doesn't ramp further
+  // Start with at least the level min, but expand range as session progresses
+  // Phase 1 (0-9): level range capped at 6
+  // Phase 2 (10-19): expand to 9
+  // Phase 3 (20-29): expand to 12
+  // Phase 4 (30+): full range up to 12 minimum
+  const phase = Math.floor(attempted / 10);
+  const minCap = [6, 9, 12, 15, 20][Math.min(phase, 4)];
+  const effectiveMax = Math.min(Math.max(L.max, minCap), 12);
+  // Always ensure at least level min
+  return { min: L.min, max: Math.max(effectiveMax, L.max), multi: false, label: L.label };
+}
+
+function generateProblem(op, level) {
+  const attempted = state.attempted || 0;
+  const L = getProgressiveRange(level, attempted);
   let a, b, question, answer;
   const baseOp = op.startsWith('mixed') ?
     (op === 'mixed-md' ? (Math.random() < 0.5 ? 'multiply' : 'divide') :
      (Math.random() < 0.5 ? 'add' : 'subtract')) : op;
 
-  // Try up to 20 times to avoid duplicates
-  for (let attempt = 0; attempt < 20; attempt++) {
+  // Try up to 50 times to avoid duplicates
+  for (let attempt = 0; attempt < 50; attempt++) {
     if (baseOp === 'multiply') {
       if (L.multi) { a = rand(10, 99); b = rand(2, 9); }
       else { a = rand(L.min, L.max); b = rand(L.min, L.max); }
@@ -841,7 +858,9 @@ function generateProblem(op, level) {
       return { question, answer };
     }
   }
-  // Fallback if we exhausted attempts (small range)
+  // All unique combos exhausted — reset seen set and return this one
+  state.seenProblems.clear();
+  state.seenProblems.add(question);
   return { question, answer };
 }
 
