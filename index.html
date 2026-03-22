@@ -449,7 +449,8 @@ html, body {
 .history-stat .stat-value { font-size: 1.1rem; }
 
 .chart-container { width: 100%; background: var(--bg-card); border-radius: var(--radius); padding: 12px; }
-.chart-container canvas { width: 100%; height: 160px; display: block; }
+/* Chart canvas sizing is handled entirely by JS — do not set width/height here */
+.chart-container canvas { display: block; }
 
 .session-list { width: 100%; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 .session-item {
@@ -727,6 +728,13 @@ let state = {
 };
 
 // ===== PERSISTENCE =====
+// One-time stats reset (v2 update)
+if (localStorage.getItem('math-drill-version') !== 'v2') {
+  localStorage.removeItem('math-drill-Charlie');
+  localStorage.removeItem('math-drill-Mae');
+  localStorage.removeItem('math-drill-settings');
+  localStorage.setItem('math-drill-version', 'v2');
+}
 function loadSessions(player) {
   try { return JSON.parse(localStorage.getItem(`math-drill-${player}`) || '[]'); } catch { return []; }
 }
@@ -1061,9 +1069,12 @@ function loadNextProblem() {
 
 function submitAnswer(skipped) {
   if (state.timeLeft <= 0) return;
+  if (state._submitting) return; // guard against double-fire from auto-advance
+  state._submitting = true;
+  setTimeout(() => { state._submitting = false; }, 100);
   const input = document.getElementById('answerInput');
   const userAnswer = skipped ? null : parseInt(input.value);
-  if (!skipped && (input.value === '' || isNaN(userAnswer))) return;
+  if (!skipped && (input.value === '' || isNaN(userAnswer))) { state._submitting = false; return; }
 
   const timeMs = Math.round(performance.now() - state.problemStart);
   const correct = !skipped && userAnswer === state.currentProblem.answer;
@@ -1197,6 +1208,13 @@ document.getElementById('answerInput').addEventListener('keydown', (e) => {
 });
 document.getElementById('answerInput').addEventListener('input', (e) => {
   e.target.value = e.target.value.replace(/[^0-9]/g, '');
+  // Auto-advance: if typed value matches the correct answer, submit immediately
+  if (state.currentProblem && e.target.value !== '' && !isNaN(parseInt(e.target.value))) {
+    const typed = parseInt(e.target.value);
+    if (typed === state.currentProblem.answer) {
+      submitAnswer(false);
+    }
+  }
 });
 
 // ===== END DRILL =====
@@ -1342,8 +1360,9 @@ function renderHistory() {
     <div class="history-stat"><div class="stat-value">${masteries}</div><div class="stat-label">Mastery</div></div>
   `;
 
-  // Chart
-  drawChart(filtered);
+  // Chart — delay one frame to ensure layout is settled
+  const chartData = filtered;
+  requestAnimationFrame(() => drawChart(chartData));
 
   // Session list
   const listEl = document.getElementById('sessionList');
