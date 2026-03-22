@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Math Drill</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #111128;
+  --bg-card: #1a1a3e;
+  --text-primary: #e8e8f0;
+  --text-secondary: #7777aa;
+  --accent: #00d4ff;
+  --accent2: #a855f7;
+  --accent-glow: rgba(0,212,255,0.4);
+  --success: #00e676;
+  --error: #ff5252;
+  --warn: #ffab00;
+  --critical: #ff1744;
+  --radius: 12px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --shield-blue: #1e90ff;
+  --shield-purple: #a855f7;
+}
+
+/* ===== CHARLIE / FORTNITE THEME (default) ===== */
+[data-theme="charlie"] {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #111128;
+  --bg-card: #1a1a3e;
+  --text-primary: #e8e8f0;
+  --text-secondary: #7777aa;
+  --accent: #00d4ff;
+  --accent2: #a855f7;
+  --accent-glow: rgba(0,212,255,0.4);
+  --success: #00e676;
+  --error: #ff5252;
+  --warn: #ffab00;
+  --critical: #ff1744;
+  --radius: 8px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* ===== MAE / MINECRAFT THEME ===== */
+[data-theme="mae"] {
+  --bg-primary: #3b2d1a;
+  --bg-secondary: #4a3828;
+  --bg-card: #5a4530;
+  --text-primary: #f5edd8;
+  --text-secondary: #c4b08a;
+  --accent: #55ff55;
+  --accent2: #ffaa00;
+  --accent-glow: rgba(85,255,85,0.3);
+  --success: #55ff55;
+  --error: #ff5555;
+  --warn: #ffaa00;
+  --critical: #ff3333;
+  --radius: 0px;
+  --font: 'Courier New', 'Courier', monospace;
+}
+
+[data-theme="default"] {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a2e;
+  --text-secondary: #666680;
+  --accent: #007aff;
+  --accent2: #5856d6;
+  --accent-glow: rgba(0,122,255,0.2);
+  --success: #34c759;
+  --error: #ff3b30;
+  --warn: #ff9500;
+  --critical: #ff2d55;
+  --radius: 16px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+html, body {
+  height: 100%; font-family: var(--font);
+  background: var(--bg-primary); color: var(--text-primary);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+#app {
+  height: 100dvh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px; position: relative; overflow: hidden;
+}
+
+.screen { display: none; width: 100%; max-width: 480px; text-align: center; }
+.screen.active { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+/* ===== PARTICLE CANVAS ===== */
+#particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+/* ===== START SCREEN ===== */
+.title {
+  font-size: 2.2rem; font-weight: 900; color: var(--accent);
+  text-shadow: 0 0 20px var(--accent-glow); letter-spacing: 1px;
+  z-index: 1;
+}
+.subtitle { font-size: 0.95rem; color: var(--text-secondary); z-index: 1; }
+
+.player-buttons { display: flex; gap: 12px; width: 100%; z-index: 1; }
+.player-btn {
+  flex: 1; padding: 20px 16px; border: 2px solid var(--accent);
+  background: var(--bg-card); color: var(--accent); font-size: 1.3rem;
+  font-weight: 700; border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; min-height: 64px; font-family: var(--font);
+  position: relative; overflow: hidden;
+}
+.player-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.05));
+}
+.player-btn:active, .player-btn.selected {
+  background: var(--accent); color: var(--bg-primary);
+  box-shadow: 0 0 30px var(--accent-glow);
+  transform: scale(1.02);
+}
+
+.ops-row { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; z-index: 1; }
+.op-btn {
+  flex: 1; min-width: 80px; padding: 14px 8px; border: 2px solid transparent;
+  background: var(--bg-card); color: var(--text-primary); font-size: 1rem;
+  font-weight: 600; border-radius: var(--radius); cursor: pointer;
+  transition: all 0.2s; font-family: var(--font);
+}
+.op-btn:active, .op-btn.selected {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.settings-row {
+  display: flex; gap: 8px; width: 100%; z-index: 1;
+}
+.setting-card {
+  flex: 1; background: var(--bg-card); padding: 12px;
+  border-radius: var(--radius); display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+}
+.setting-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.setting-value { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+.setting-arrows { display: flex; gap: 6px; }
+.setting-arrow {
+  width: 40px; height: 40px; border: none; background: var(--bg-secondary);
+  color: var(--text-primary); font-size: 1rem; border-radius: var(--radius);
+  cursor: pointer; font-family: var(--font); display: flex; align-items: center;
+  justify-content: center;
+}
+.setting-arrow:disabled { opacity: 0.25; }
+
+.timer-toggle { display: flex; gap: 8px; z-index: 1; }
+.timer-opt {
+  padding: 10px 20px; border: 2px solid var(--bg-card);
+  background: var(--bg-card); color: var(--text-secondary);
+  font-size: 1rem; font-weight: 700; border-radius: var(--radius);
+  cursor: pointer; font-family: var(--font); transition: all 0.2s;
+}
+.timer-opt.selected {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.start-btn {
+  width: 100%; padding: 20px; border: none; background: var(--accent);
+  color: var(--bg-primary); font-size: 1.4rem; font-weight: 900;
+  border-radius: var(--radius); cursor: pointer; letter-spacing: 1px;
+  transition: all 0.15s; font-family: var(--font); min-height: 64px;
+  text-transform: uppercase; z-index: 1;
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.start-btn:active { transform: scale(0.97); }
+.start-btn:disabled { opacity: 0.3; box-shadow: none; }
+
+.top-bar {
+  position: absolute; top: 8px; right: 8px; display: flex; gap: 8px; z-index: 10;
+}
+.icon-btn {
+  background: var(--bg-card); border: 1px solid var(--bg-secondary);
+  color: var(--text-secondary); width: 40px; height: 40px; border-radius: var(--radius);
+  cursor: pointer; font-size: 1.1rem; display: flex; align-items: center;
+  justify-content: center; font-family: var(--font);
+}
+
+.history-btn {
+  background: var(--bg-card); border: 1px solid var(--bg-secondary);
+  color: var(--text-secondary); padding: 10px 16px; border-radius: var(--radius);
+  cursor: pointer; font-size: 0.85rem; font-family: var(--font); z-index: 1;
+  width: 100%;
+}
+
+/* ===== COUNTDOWN ===== */
+.countdown-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 100; gap: 12px;
+}
+.countdown-number {
+  font-size: 10rem; font-weight: 900; color: var(--accent);
+  text-shadow: 0 0 60px var(--accent-glow);
+  animation: countPop 0.6s ease-out;
+}
+.countdown-label { font-size: 1.2rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 3px; }
+@keyframes countPop { 0%{transform:scale(2);opacity:0} 60%{opacity:1} 100%{transform:scale(1)} }
+
+/* ===== DRILL SCREEN ===== */
+.drill-header { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+
+/* Storm circle (Fortnite) */
+.storm-container {
+  width: 100%; height: 12px; background: var(--bg-card);
+  border-radius: 6px; overflow: hidden; position: relative;
+}
+.storm-fill {
+  height: 100%; border-radius: 6px; transition: width 0.3s linear;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.storm-fill.warn { background: linear-gradient(90deg, var(--warn), #ff6600); }
+.storm-fill.critical { background: linear-gradient(90deg, var(--critical), #ff0044); animation: stormPulse 0.4s infinite alternate; }
+@keyframes stormPulse { to { opacity: 0.5; } }
+
+/* XP bar (Minecraft) */
+[data-theme="mae"] .storm-container {
+  height: 16px; border-radius: 0; border: 2px solid #333;
+  background: #222; image-rendering: pixelated;
+}
+[data-theme="mae"] .storm-fill {
+  background: #55ff55; border-radius: 0;
+}
+
+.timer-text {
+  font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums;
+}
+.timer-text.warn { color: var(--warn); }
+.timer-text.critical { color: var(--critical); }
+
+/* Fortnite shield bar display */
+.shield-bar {
+  display: flex; gap: 4px; align-items: center;
+  font-size: 0.8rem; color: var(--text-secondary);
+}
+
+.combo-display {
+  min-height: 32px; display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.2rem; transition: all 0.2s;
+}
+.combo-display.fire { color: #ff6600; text-shadow: 0 0 10px #ff4400; }
+.combo-display.lightning { color: #ffee00; text-shadow: 0 0 15px #ffcc00, 0 0 30px #ff8800; }
+.combo-display.legendary { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 40px #aa00ff; animation: legendaryPulse 0.3s infinite alternate; }
+@keyframes legendaryPulse { to { transform: scale(1.05); } }
+
+.problem {
+  font-size: 3.2rem; font-weight: 900; margin: 8px 0;
+  min-height: 70px; display: flex; align-items: center; justify-content: center;
+  font-variant-numeric: tabular-nums; transition: transform 0.1s;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.problem.shake {
+  animation: shake 0.3s ease-in-out;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px) rotate(-1deg); }
+  40% { transform: translateX(8px) rotate(1deg); }
+  60% { transform: translateX(-5px) rotate(-0.5deg); }
+  80% { transform: translateX(5px) rotate(0.5deg); }
+}
+
+.answer-row { display: flex; gap: 8px; width: 100%; max-width: 320px; }
+.answer-input {
+  flex: 1; padding: 14px; font-size: 2rem; text-align: center;
+  background: var(--bg-card); border: 2px solid var(--accent);
+  color: var(--text-primary); border-radius: var(--radius);
+  font-family: var(--font); font-weight: 700; outline: none;
+  -webkit-appearance: none; font-variant-numeric: tabular-nums;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.answer-input:focus { box-shadow: 0 0 20px var(--accent-glow); }
+.answer-input.correct-flash { border-color: var(--success); box-shadow: 0 0 20px rgba(0,230,118,0.4); }
+.answer-input.wrong-flash { border-color: var(--error); box-shadow: 0 0 20px rgba(255,82,82,0.4); }
+
+.submit-btn {
+  padding: 14px 20px; background: var(--accent); color: var(--bg-primary);
+  border: none; font-size: 1.3rem; font-weight: 900; border-radius: var(--radius);
+  cursor: pointer; font-family: var(--font); min-width: 72px;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+.drill-bottom { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.skip-btn {
+  background: none; border: 1px solid var(--text-secondary); color: var(--text-secondary);
+  padding: 8px 16px; border-radius: var(--radius); font-size: 0.85rem;
+  cursor: pointer; font-family: var(--font);
+}
+.score-live { font-size: 0.9rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Kill feed (Fortnite) */
+.kill-feed {
+  position: fixed; top: 60px; right: 12px; z-index: 20;
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+  pointer-events: none;
+}
+.kill-entry {
+  background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px;
+  font-size: 0.75rem; color: var(--text-primary); white-space: nowrap;
+  animation: killSlide 0.3s ease-out;
+  border-left: 3px solid var(--success);
+}
+.kill-entry.miss { border-left-color: var(--error); }
+@keyframes killSlide { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Achievement toast (Minecraft) */
+.achievement-toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 90; background: #3c3c3c; border: 3px solid #555;
+  padding: 8px 16px; display: flex; align-items: center; gap: 10px;
+  animation: toastSlide 0.4s ease-out;
+  font-family: 'Courier New', monospace;
+}
+.achievement-icon { font-size: 1.5rem; }
+.achievement-text { text-align: left; }
+.achievement-title { color: #ffff55; font-size: 0.8rem; font-weight: 700; }
+.achievement-desc { color: #aaa; font-size: 0.7rem; }
+@keyframes toastSlide { from { transform: translateX(-50%) translateY(-60px); opacity: 0; } }
+
+/* Hearts (Minecraft) */
+.hearts-row { display: flex; gap: 2px; justify-content: center; }
+.heart { font-size: 1.2rem; transition: all 0.2s; }
+.heart.empty { opacity: 0.2; filter: grayscale(1); }
+
+/* Feedback */
+.feedback-overlay {
+  position: fixed; inset: 0; display: flex; align-items: center;
+  justify-content: center; z-index: 50; pointer-events: none;
+}
+.feedback-icon {
+  font-size: 5rem; animation: feedbackPop 0.4s ease-out forwards;
+}
+.feedback-icon.correct { color: var(--success); }
+.feedback-icon.wrong { color: var(--error); }
+@keyframes feedbackPop {
+  0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+  50% { transform: scale(1.4) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 0; }
+}
+
+/* Hit marker (Fortnite) */
+.hitmarker {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  z-index: 55; pointer-events: none; animation: hitFade 0.3s ease-out forwards;
+}
+@keyframes hitFade { 0%{opacity:1;transform:translate(-50%,-50%) scale(0.5)} 50%{transform:translate(-50%,-50%) scale(1.2)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1)} }
+
+/* Block break (Minecraft) */
+.block-break {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  z-index: 55; pointer-events: none;
+}
+.block-particle {
+  position: absolute; width: 8px; height: 8px; background: var(--accent);
+  animation: blockFly 0.5s ease-out forwards;
+}
+@keyframes blockFly {
+  to { transform: translate(var(--tx), var(--ty)) rotate(360deg); opacity: 0; }
+}
+
+/* ===== RESULTS SCREEN ===== */
+.result-header { font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; }
+
+/* Victory Royale style */
+.victory-text {
+  font-size: 2.8rem; font-weight: 900; color: var(--accent);
+  text-shadow: 0 0 30px var(--accent-glow);
+  animation: victoryIn 0.6s ease-out;
+}
+@keyframes victoryIn { 0%{transform:scale(0) rotate(-5deg);opacity:0} 70%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0)} }
+
+.result-score { font-size: 3.5rem; font-weight: 900; color: var(--text-primary); }
+.result-badge {
+  display: inline-block; padding: 8px 24px; border-radius: var(--radius);
+  font-size: 1.1rem; font-weight: 700; margin: 4px 0;
+}
+.badge-mastery {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a1a; box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  animation: badgeGlow 1s infinite alternate;
+}
+@keyframes badgeGlow { to { box-shadow: 0 0 30px rgba(255,140,0,0.6); } }
+.badge-proficient { background: var(--success); color: #1a1a1a; }
+.badge-practice { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.stat-card {
+  background: var(--bg-card); padding: 12px; border-radius: var(--radius);
+  text-align: center;
+}
+.stat-value { font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 0.7rem; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.fastest-list { width: 100%; text-align: left; }
+.fastest-header { font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0; text-transform: uppercase; letter-spacing: 1px; }
+.fastest-item {
+  display: flex; justify-content: space-between; padding: 6px 12px;
+  background: var(--bg-card); border-radius: var(--radius); margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+.fastest-time { color: var(--accent); font-weight: 700; }
+
+.result-actions { display: flex; gap: 8px; width: 100%; }
+.result-btn {
+  flex: 1; padding: 14px; border: 2px solid var(--accent);
+  background: transparent; color: var(--accent); font-size: 1rem;
+  font-weight: 700; border-radius: var(--radius); cursor: pointer;
+  font-family: var(--font);
+}
+.result-btn.primary {
+  background: var(--accent); color: var(--bg-primary); border-color: var(--accent);
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+.result-btn:active { transform: scale(0.97); }
+
+/* ===== HISTORY SCREEN ===== */
+.history-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.history-title { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+.back-btn {
+  background: var(--bg-card); border: 1px solid var(--bg-secondary);
+  color: var(--text-secondary); padding: 8px 14px; border-radius: var(--radius);
+  cursor: pointer; font-family: var(--font); font-size: 0.85rem;
+}
+
+.history-filters { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
+.filter-btn {
+  padding: 6px 12px; border: 1px solid var(--bg-card); background: var(--bg-card);
+  color: var(--text-secondary); border-radius: var(--radius); font-size: 0.8rem;
+  cursor: pointer; font-family: var(--font);
+}
+.filter-btn.active { border-color: var(--accent); color: var(--accent); }
+
+.history-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+.history-stat {
+  background: var(--bg-card); padding: 8px; border-radius: var(--radius); text-align: center;
+}
+.history-stat .stat-value { font-size: 1.1rem; }
+
+.chart-container { width: 100%; background: var(--bg-card); border-radius: var(--radius); padding: 12px; }
+canvas { width: 100%; height: 160px; }
+
+.session-list { width: 100%; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.session-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: var(--bg-card); border-radius: var(--radius);
+  font-size: 0.8rem;
+}
+.session-score { font-weight: 700; color: var(--accent); }
+.session-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; }
+
+.data-actions { display: flex; gap: 8px; width: 100%; }
+.data-btn {
+  flex: 1; padding: 10px; background: var(--bg-card); border: 1px solid var(--bg-secondary);
+  color: var(--text-secondary); border-radius: var(--radius); font-size: 0.8rem;
+  cursor: pointer; font-family: var(--font);
+}
+
+/* ===== PARENT MODE ===== */
+.parent-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 300; display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.parent-panel {
+  background: var(--bg-secondary); border: 1px solid var(--bg-card);
+  border-radius: var(--radius); padding: 24px; width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.parent-title { font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+.parent-subtitle { font-size: 0.8rem; color: var(--text-secondary); }
+.parent-btn {
+  padding: 12px; border: 1px solid var(--bg-card); background: var(--bg-card);
+  color: var(--text-primary); border-radius: var(--radius); font-size: 0.9rem;
+  cursor: pointer; font-family: var(--font); text-align: left;
+}
+.parent-btn:active { opacity: 0.7; }
+.parent-btn.danger { border-color: var(--error); color: var(--error); }
+.parent-btn.danger:active { background: var(--error); color: white; }
+.parent-close {
+  padding: 12px; border: none; background: var(--accent); color: var(--bg-primary);
+  border-radius: var(--radius); font-size: 1rem; font-weight: 700;
+  cursor: pointer; font-family: var(--font);
+}
+.parent-confirm {
+  padding: 10px; border: 2px solid var(--error); background: transparent;
+  color: var(--error); border-radius: var(--radius); font-size: 0.85rem;
+  cursor: pointer; font-family: var(--font); margin-top: 4px; display: none;
+}
+.parent-confirm.visible { display: block; }
+
+/* ===== CONFETTI ===== */
+.confetti-piece {
+  position: fixed; z-index: 200; pointer-events: none;
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ===== MINECRAFT SPECIFIC ===== */
+[data-theme="mae"] .title { text-shadow: 3px 3px 0px #333; letter-spacing: 2px; }
+[data-theme="mae"] .player-btn, [data-theme="mae"] .op-btn,
+[data-theme="mae"] .start-btn, [data-theme="mae"] .result-btn,
+[data-theme="mae"] .submit-btn {
+  border-radius: 0; border-width: 3px;
+  box-shadow: 3px 3px 0px rgba(0,0,0,0.4);
+}
+[data-theme="mae"] .player-btn::after { display: none; }
+[data-theme="mae"] .answer-input { border-radius: 0; border-width: 3px; }
+[data-theme="mae"] .problem { font-family: 'Courier New', monospace; }
+[data-theme="mae"] .stat-card, [data-theme="mae"] .bg-card,
+[data-theme="mae"] .fastest-item, [data-theme="mae"] .session-item {
+  border-radius: 0; border: 2px solid #333;
+}
+
+/* Dirt texture overlay for Minecraft */
+[data-theme="mae"] #app::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 14px, rgba(0,0,0,0.08) 14px, rgba(0,0,0,0.08) 16px),
+    repeating-linear-gradient(90deg, transparent, transparent 14px, rgba(0,0,0,0.08) 14px, rgba(0,0,0,0.08) 16px);
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="particles"></canvas>
+
+  <div class="top-bar">
+    <button class="icon-btn" id="soundToggle" title="Sound">♪</button>
+    <button class="icon-btn" id="themeToggle" title="Theme">◐</button>
+  </div>
+
+  <!-- ===== START SCREEN ===== -->
+  <div class="screen active" id="startScreen">
+    <div class="title" id="titleText">MATH DRILL</div>
+    <div class="subtitle" id="subtitleText">How many can you get?</div>
+
+    <div class="player-buttons">
+      <button class="player-btn" data-player="Charlie">⚡ Charlie</button>
+      <button class="player-btn" data-player="Mae">⛏ Mae</button>
+    </div>
+
+    <div class="ops-row" id="opsRow" style="display:none"></div>
+
+    <div class="settings-row" id="settingsRow" style="display:none">
+      <div class="setting-card">
+        <div class="setting-label">Difficulty</div>
+        <div class="setting-value" id="levelText">Level 1</div>
+        <div class="setting-arrows">
+          <button class="setting-arrow" id="levelDown">◀</button>
+          <button class="setting-arrow" id="levelUp">▶</button>
+        </div>
+      </div>
+      <div class="setting-card">
+        <div class="setting-label">Time</div>
+        <div class="timer-toggle">
+          <button class="timer-opt selected" data-time="60">1 min</button>
+          <button class="timer-opt" data-time="120">2 min</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="start-btn" id="startBtn" disabled>DROP IN</button>
+    <button class="history-btn" id="historyBtn">📊 View History & Stats</button>
+  </div>
+
+  <!-- ===== DRILL SCREEN ===== -->
+  <div class="screen" id="drillScreen">
+    <div class="drill-header">
+      <div class="timer-text" id="timerText">60</div>
+      <div class="score-live" id="scoreLive">0 / 0</div>
+    </div>
+    <div class="storm-container"><div class="storm-fill" id="timerFill" style="width:100%"></div></div>
+    <div class="combo-display" id="comboDisplay"></div>
+    <div class="hearts-row" id="heartsRow"></div>
+    <div class="problem" id="problem"></div>
+    <div class="answer-row">
+      <input class="answer-input" id="answerInput" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button class="submit-btn" id="submitBtn">GO</button>
+    </div>
+    <div class="drill-bottom">
+      <button class="skip-btn" id="skipBtn">Skip →</button>
+      <div id="streakText" style="font-size:0.8rem;color:var(--text-secondary)"></div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS SCREEN ===== -->
+  <div class="screen" id="resultsScreen">
+    <div class="result-header" id="resultHeader"></div>
+    <div class="victory-text" id="victoryText"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div id="resultBadge"></div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="fastest-list" id="fastestList"></div>
+    <div class="result-actions">
+      <button class="result-btn primary" id="playAgainBtn">Play Again</button>
+      <button class="result-btn" id="changeSettingsBtn">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY SCREEN ===== -->
+  <div class="screen" id="historyScreen">
+    <div class="history-header">
+      <div class="history-title">Progress</div>
+      <button class="back-btn" id="historyBack">← Back</button>
+    </div>
+    <div class="history-filters" id="historyFilters"></div>
+    <div class="history-stats" id="historyStats"></div>
+    <div class="chart-container"><canvas id="historyChart"></canvas></div>
+    <div class="session-list" id="sessionList"></div>
+    <div class="data-actions">
+      <button class="data-btn" id="exportBtn">⬇ Export Data</button>
+      <button class="data-btn" id="importBtn">⬆ Import Data</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+
+  <div class="kill-feed" id="killFeed"></div>
+</div>
+
+<script>
+// ===== AUDIO ENGINE =====
+const AudioEngine = {
+  ctx: null, enabled: true,
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  play(type) {
+    if (!this.enabled || !this.ctx) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const now = this.ctx.currentTime;
+    switch(type) {
+      case 'correct': this._hit(now); break;
+      case 'wrong': this._miss(now); break;
+      case 'streak3': this._streak(now, 3); break;
+      case 'streak5': this._streak(now, 5); break;
+      case 'streak10': this._streak(now, 10); break;
+      case 'countdown': this._beep(now, 440, 0.1); break;
+      case 'go': this._beep(now, 880, 0.2); break;
+      case 'timeWarn': this._beep(now, 330, 0.08); break;
+      case 'victory': this._victory(now); break;
+      case 'mastery': this._mastery(now); break;
+    }
+  },
+  _beep(t, freq, dur) {
+    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+    o.connect(g); g.connect(this.ctx.destination);
+    o.frequency.value = freq; o.type = 'sine';
+    g.gain.setValueAtTime(0.15, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur);
+  },
+  _hit(t) {
+    [523, 659].forEach((f, i) => this._beep(t + i * 0.04, f, 0.08));
+  },
+  _miss(t) {
+    this._beep(t, 200, 0.15);
+    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+    o.connect(g); g.connect(this.ctx.destination);
+    o.frequency.value = 180; o.type = 'sawtooth';
+    g.gain.setValueAtTime(0.08, t + 0.05); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.start(t + 0.05); o.stop(t + 0.2);
+  },
+  _streak(t, n) {
+    const base = n >= 10 ? 660 : n >= 5 ? 550 : 440;
+    [0, 0.06, 0.12, 0.18].forEach((d, i) => this._beep(t + d, base + i * 80, 0.1));
+  },
+  _victory(t) {
+    [523, 587, 659, 784, 880].forEach((f, i) => this._beep(t + i * 0.12, f, 0.15));
+  },
+  _mastery(t) {
+    [523, 659, 784, 880, 1047, 1175, 1319, 1568].forEach((f, i) => this._beep(t + i * 0.08, f, 0.12));
+  }
+};
+
+// ===== CONSTANTS =====
+const LEVELS = {
+  1: { label: '1–5', min: 1, max: 5 },
+  2: { label: '1–10', min: 1, max: 10 },
+  3: { label: '1–12', min: 1, max: 12 },
+  4: { label: '1–15', min: 1, max: 15 },
+  5: { label: '1–20', min: 1, max: 20 },
+  6: { label: 'Multi', min: 1, max: 20, multi: true }
+};
+
+const PLAYERS = {
+  Charlie: {
+    ops: ['multiply','divide','mixed-md'], theme: 'charlie',
+    title: 'MATH ROYALE', subtitle: 'Drop in. Eliminate problems. Win.',
+    startLabel: 'DROP IN', resultLabel: 'ELIMINATIONS'
+  },
+  Mae: {
+    ops: ['add','subtract','mixed-as'], theme: 'mae',
+    title: 'MATH CRAFT', subtitle: 'Mine answers. Build your score.',
+    startLabel: 'START MINING', resultLabel: 'BLOCKS MINED'
+  }
+};
+
+const OP_LABELS = {
+  'multiply': '× Multiply', 'divide': '÷ Divide', 'mixed-md': '×÷ Mixed',
+  'add': '+ Add', 'subtract': '− Subtract', 'mixed-as': '+− Mixed'
+};
+
+// ===== STATE =====
+let state = {
+  player: null, operation: null, level: 1, duration: 60,
+  problems: [], seenProblems: new Set(),
+  currentProblem: null, nextProblem: null,
+  timeLeft: 60, totalTime: 60,
+  score: 0, attempted: 0, streak: 0, bestStreak: 0,
+  problemStart: 0, timerInterval: null, theme: 'charlie',
+  hearts: 10, lastWarnBeep: 0
+};
+
+// ===== PERSISTENCE =====
+function loadSessions(player) {
+  try { return JSON.parse(localStorage.getItem(`math-drill-${player}`) || '[]'); } catch { return []; }
+}
+function saveSessions(player, sessions) {
+  try { localStorage.setItem(`math-drill-${player}`, JSON.stringify(sessions.slice(-100))); } catch {}
+}
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem('math-drill-settings') || '{}'); } catch { return {}; }
+}
+function saveSettings(s) {
+  try { localStorage.setItem('math-drill-settings', JSON.stringify(s)); } catch {}
+}
+
+// ===== PARTICLES =====
+const particleCanvas = document.getElementById('particles');
+const pCtx = particleCanvas.getContext('2d');
+let particles = [];
+
+function resizeParticles() {
+  particleCanvas.width = window.innerWidth;
+  particleCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeParticles);
+resizeParticles();
+
+function spawnParticles() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme === 'default') { particles = []; return; }
+  while (particles.length < 30) {
+    particles.push({
+      x: Math.random() * particleCanvas.width,
+      y: Math.random() * particleCanvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: -Math.random() * 0.8 - 0.2,
+      size: Math.random() * 3 + 1,
+      alpha: Math.random() * 0.3 + 0.1,
+      color: theme === 'mae' ? '#55ff55' : '#00d4ff'
+    });
+  }
+}
+
+function animateParticles() {
+  pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+  particles.forEach((p, i) => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.y < -10) { p.y = particleCanvas.height + 10; p.x = Math.random() * particleCanvas.width; }
+    pCtx.globalAlpha = p.alpha;
+    pCtx.fillStyle = p.color;
+    const theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'mae') {
+      pCtx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(p.size), Math.round(p.size));
+    } else {
+      pCtx.beginPath(); pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2); pCtx.fill();
+    }
+  });
+  pCtx.globalAlpha = 1;
+  requestAnimationFrame(animateParticles);
+}
+spawnParticles();
+animateParticles();
+
+// ===== THEME =====
+const themes = ['charlie','mae','default'];
+let themeIdx = 0;
+document.getElementById('themeToggle').addEventListener('click', () => {
+  themeIdx = (themeIdx + 1) % themes.length;
+  applyTheme(themes[themeIdx]);
+});
+document.getElementById('soundToggle').addEventListener('click', () => {
+  AudioEngine.enabled = !AudioEngine.enabled;
+  document.getElementById('soundToggle').textContent = AudioEngine.enabled ? '♪' : '♩';
+  document.getElementById('soundToggle').style.opacity = AudioEngine.enabled ? 1 : 0.4;
+});
+
+function applyTheme(t) {
+  state.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  particles = []; spawnParticles();
+}
+
+// ===== HELPERS =====
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateProblem(op, level) {
+  const L = LEVELS[level];
+  let a, b, question, answer;
+  const baseOp = op.startsWith('mixed') ?
+    (op === 'mixed-md' ? (Math.random() < 0.5 ? 'multiply' : 'divide') :
+     (Math.random() < 0.5 ? 'add' : 'subtract')) : op;
+
+  // Try up to 20 times to avoid duplicates
+  for (let attempt = 0; attempt < 20; attempt++) {
+    if (baseOp === 'multiply') {
+      if (L.multi) { a = rand(10, 99); b = rand(2, 9); }
+      else { a = rand(L.min, L.max); b = rand(L.min, L.max); }
+      question = `${a} × ${b}`; answer = a * b;
+    } else if (baseOp === 'divide') {
+      if (L.multi) { b = rand(2, 9); answer = rand(10, 30); a = b * answer; }
+      else { b = rand(Math.max(1, L.min), L.max); answer = rand(L.min, L.max); a = b * answer; }
+      question = `${a} ÷ ${b}`;
+    } else if (baseOp === 'add') {
+      if (L.multi) { a = rand(10, 99); b = rand(10, 99); }
+      else { a = rand(L.min, L.max); b = rand(L.min, L.max); }
+      question = `${a} + ${b}`; answer = a + b;
+    } else {
+      if (L.multi) { a = rand(20, 99); b = rand(10, a); }
+      else { a = rand(L.min, L.max); b = rand(L.min, a); }
+      question = `${a} − ${b}`; answer = a - b;
+    }
+    if (!state.seenProblems.has(question)) {
+      state.seenProblems.add(question);
+      return { question, answer };
+    }
+  }
+  // Fallback if we exhausted attempts (small range)
+  return { question, answer };
+}
+
+// ===== SCREENS =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== START SCREEN =====
+const playerBtns = document.querySelectorAll('.player-btn');
+const startBtn = document.getElementById('startBtn');
+
+playerBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    AudioEngine.init();
+    playerBtns.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.player = btn.dataset.player;
+    const P = PLAYERS[state.player];
+
+    applyTheme(P.theme);
+    themeIdx = themes.indexOf(P.theme);
+
+    document.getElementById('titleText').textContent = P.title;
+    document.getElementById('subtitleText').textContent = P.subtitle;
+    startBtn.textContent = P.startLabel;
+
+    // Operations
+    const opsRow = document.getElementById('opsRow');
+    opsRow.innerHTML = '';
+    P.ops.forEach(op => {
+      const b = document.createElement('button');
+      b.className = 'op-btn'; b.textContent = OP_LABELS[op]; b.dataset.op = op;
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.op-btn').forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        state.operation = op;
+        document.getElementById('settingsRow').style.display = 'flex';
+        updateLevelDisplay();
+        startBtn.disabled = false;
+      });
+      opsRow.appendChild(b);
+    });
+    opsRow.style.display = 'flex';
+    document.getElementById('settingsRow').style.display = 'none';
+    state.operation = null;
+    startBtn.disabled = true;
+  });
+});
+
+// Level controls
+function updateLevelDisplay() {
+  document.getElementById('levelText').textContent = `Lv ${state.level}: ${LEVELS[state.level].label}`;
+  document.getElementById('levelDown').disabled = state.level <= 1;
+  document.getElementById('levelUp').disabled = state.level >= 6;
+}
+document.getElementById('levelDown').addEventListener('click', () => { if (state.level > 1) { state.level--; updateLevelDisplay(); } });
+document.getElementById('levelUp').addEventListener('click', () => { if (state.level < 6) { state.level++; updateLevelDisplay(); } });
+
+// Timer toggle
+document.querySelectorAll('.timer-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.timer-opt').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.duration = parseInt(btn.dataset.time);
+  });
+});
+
+// ===== COUNTDOWN =====
+startBtn.addEventListener('click', startCountdown);
+
+function startCountdown() {
+  AudioEngine.init();
+  let count = 3;
+  const overlay = document.createElement('div');
+  overlay.className = 'countdown-overlay';
+  const P = PLAYERS[state.player];
+  overlay.innerHTML = `<div class="countdown-number">${count}</div><div class="countdown-label">${state.player === 'Charlie' ? 'PREPARE TO DROP' : 'GET YOUR PICKAXE READY'}</div>`;
+  document.body.appendChild(overlay);
+  AudioEngine.play('countdown');
+
+  const iv = setInterval(() => {
+    count--;
+    if (count > 0) {
+      overlay.querySelector('.countdown-number').textContent = count;
+      overlay.querySelector('.countdown-number').style.animation = 'none';
+      void overlay.offsetWidth;
+      overlay.querySelector('.countdown-number').style.animation = 'countPop 0.6s ease-out';
+      AudioEngine.play('countdown');
+    } else if (count === 0) {
+      overlay.querySelector('.countdown-number').textContent = 'GO!';
+      overlay.querySelector('.countdown-number').style.color = 'var(--success)';
+      overlay.querySelector('.countdown-label').textContent = state.player === 'Charlie' ? 'DROPPING IN' : 'MINING START';
+      AudioEngine.play('go');
+    } else {
+      clearInterval(iv);
+      overlay.remove();
+      startDrill();
+    }
+  }, 700);
+}
+
+// ===== DRILL =====
+function startDrill() {
+  state.problems = [];
+  state.seenProblems = new Set();
+  state.score = 0; state.attempted = 0;
+  state.streak = 0; state.bestStreak = 0;
+  state.timeLeft = state.duration; state.totalTime = state.duration;
+  state.hearts = 10; state.lastWarnBeep = 0;
+
+  // Clear kill feed
+  document.getElementById('killFeed').innerHTML = '';
+
+  showScreen('drillScreen');
+  updateHearts();
+  loadNextProblem();
+  document.getElementById('answerInput').focus();
+  updateScoreLive();
+  updateCombo();
+
+  const startTime = performance.now();
+  state.timerInterval = setInterval(() => {
+    const elapsed = (performance.now() - startTime) / 1000;
+    state.timeLeft = Math.max(0, state.totalTime - elapsed);
+    updateTimer();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      endDrill();
+    }
+  }, 50);
+}
+
+function updateTimer() {
+  const secs = Math.ceil(state.timeLeft);
+  const pct = (state.timeLeft / state.totalTime) * 100;
+  const fill = document.getElementById('timerFill');
+  const text = document.getElementById('timerText');
+
+  fill.style.width = pct + '%';
+  text.textContent = secs;
+
+  fill.classList.remove('warn', 'critical');
+  text.classList.remove('warn', 'critical');
+
+  const warnTime = state.totalTime * 0.25;
+  const critTime = state.totalTime * 0.08;
+
+  if (secs <= critTime) {
+    fill.classList.add('critical'); text.classList.add('critical');
+    if (secs !== state.lastWarnBeep && secs <= 5) {
+      state.lastWarnBeep = secs;
+      AudioEngine.play('timeWarn');
+    }
+  } else if (secs <= warnTime) {
+    fill.classList.add('warn'); text.classList.add('warn');
+  }
+}
+
+function updateHearts() {
+  if (state.player !== 'Mae') { document.getElementById('heartsRow').innerHTML = ''; return; }
+  const h = document.getElementById('heartsRow');
+  let html = '';
+  for (let i = 0; i < 10; i++) {
+    html += `<span class="heart ${i < state.hearts ? '' : 'empty'}">❤️</span>`;
+  }
+  h.innerHTML = html;
+}
+
+function updateCombo() {
+  const el = document.getElementById('comboDisplay');
+  const s = state.streak;
+  if (s < 3) { el.textContent = ''; el.className = 'combo-display'; return; }
+
+  if (state.player === 'Charlie') {
+    if (s >= 10) { el.textContent = `⚡ ${s}x LEGENDARY STREAK`; el.className = 'combo-display legendary'; }
+    else if (s >= 5) { el.textContent = `🔥 ${s}x ON FIRE`; el.className = 'combo-display lightning'; }
+    else { el.textContent = `💥 ${s}x COMBO`; el.className = 'combo-display fire'; }
+  } else {
+    if (s >= 10) { el.textContent = `💎 ${s}x DIAMOND STREAK`; el.className = 'combo-display legendary'; }
+    else if (s >= 5) { el.textContent = `⭐ ${s}x ENCHANTED`; el.className = 'combo-display lightning'; }
+    else { el.textContent = `⛏ ${s}x MINING COMBO`; el.className = 'combo-display fire'; }
+  }
+}
+
+function loadNextProblem() {
+  if (state.nextProblem) {
+    state.currentProblem = state.nextProblem;
+  } else {
+    state.currentProblem = generateProblem(state.operation, state.level);
+  }
+  state.nextProblem = generateProblem(state.operation, state.level);
+  document.getElementById('problem').textContent = state.currentProblem.question;
+  document.getElementById('answerInput').value = '';
+  state.problemStart = performance.now();
+}
+
+function submitAnswer(skipped) {
+  if (state.timeLeft <= 0) return;
+  const input = document.getElementById('answerInput');
+  const userAnswer = skipped ? null : parseInt(input.value);
+  if (!skipped && (input.value === '' || isNaN(userAnswer))) return;
+
+  const timeMs = Math.round(performance.now() - state.problemStart);
+  const correct = !skipped && userAnswer === state.currentProblem.answer;
+
+  state.problems.push({
+    question: state.currentProblem.question,
+    answer: state.currentProblem.answer,
+    userAnswer: skipped ? 'skip' : userAnswer,
+    correct, timeMs
+  });
+
+  state.attempted++;
+  if (correct) {
+    state.score++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    AudioEngine.play('correct');
+    if (state.streak === 3) AudioEngine.play('streak3');
+    if (state.streak === 5) AudioEngine.play('streak5');
+    if (state.streak === 10) AudioEngine.play('streak10');
+    showCorrectFeedback();
+    input.classList.add('correct-flash');
+
+    // Achievements for Mae
+    if (state.player === 'Mae') {
+      if (state.streak === 5) showAchievement('⭐', 'Achievement Get!', '5 in a row!');
+      if (state.streak === 10) showAchievement('💎', 'Rare Achievement!', '10 streak — Diamond!');
+      if (state.score === 30) showAchievement('🏆', 'Achievement Get!', 'Proficient miner!');
+      if (state.score === 44) showAchievement('👑', 'Legendary!', 'MASTERY PLUS!');
+    }
+  } else {
+    state.streak = 0;
+    if (state.player === 'Mae') { state.hearts = Math.max(0, state.hearts - 1); updateHearts(); }
+    AudioEngine.play('wrong');
+    showWrongFeedback();
+    input.classList.add('wrong-flash');
+    // Screen shake
+    document.getElementById('problem').classList.add('shake');
+    setTimeout(() => document.getElementById('problem').classList.remove('shake'), 300);
+  }
+
+  // Kill feed (Fortnite) or ignore for Mae
+  addKillFeedEntry(state.currentProblem.question, correct);
+
+  updateCombo();
+  updateScoreLive();
+  setTimeout(() => { input.classList.remove('correct-flash', 'wrong-flash'); }, 300);
+
+  setTimeout(() => {
+    if (state.timeLeft > 0) {
+      loadNextProblem();
+      document.getElementById('answerInput').focus();
+    }
+  }, 350);
+}
+
+function showCorrectFeedback() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme === 'charlie') {
+    // Hitmarker
+    const hm = document.createElement('div');
+    hm.className = 'hitmarker';
+    hm.innerHTML = `<svg width="40" height="40" viewBox="0 0 40 40"><line x1="12" y1="12" x2="17" y2="17" stroke="white" stroke-width="2"/><line x1="28" y1="12" x2="23" y2="17" stroke="white" stroke-width="2"/><line x1="12" y1="28" x2="17" y2="23" stroke="white" stroke-width="2"/><line x1="28" y1="28" x2="23" y2="23" stroke="white" stroke-width="2"/></svg>`;
+    document.body.appendChild(hm);
+    setTimeout(() => hm.remove(), 300);
+  } else if (theme === 'mae') {
+    // Block break particles
+    const container = document.createElement('div');
+    container.className = 'block-break';
+    for (let i = 0; i < 8; i++) {
+      const p = document.createElement('div');
+      p.className = 'block-particle';
+      const angle = (i / 8) * Math.PI * 2;
+      const dist = 30 + Math.random() * 30;
+      p.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+      p.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+      p.style.background = ['#55ff55','#8b6914','#666','#55ff55'][i % 4];
+      container.appendChild(p);
+    }
+    document.body.appendChild(container);
+    setTimeout(() => container.remove(), 500);
+  } else {
+    // Default checkmark
+    const fb = document.createElement('div');
+    fb.className = 'feedback-overlay';
+    fb.innerHTML = `<div class="feedback-icon correct">✓</div>`;
+    document.body.appendChild(fb);
+    setTimeout(() => fb.remove(), 400);
+  }
+}
+
+function showWrongFeedback() {
+  const fb = document.createElement('div');
+  fb.className = 'feedback-overlay';
+  fb.innerHTML = `<div class="feedback-icon wrong">✗</div>`;
+  document.body.appendChild(fb);
+  setTimeout(() => fb.remove(), 400);
+}
+
+function addKillFeedEntry(question, correct) {
+  if (state.player !== 'Charlie') return;
+  const feed = document.getElementById('killFeed');
+  const entry = document.createElement('div');
+  entry.className = `kill-entry ${correct ? '' : 'miss'}`;
+  entry.textContent = correct ? `⚡ ${question} eliminated` : `✗ ${question} survived`;
+  feed.appendChild(entry);
+  setTimeout(() => entry.remove(), 3000);
+  // Keep feed clean
+  while (feed.children.length > 5) feed.removeChild(feed.firstChild);
+}
+
+function showAchievement(icon, title, desc) {
+  const toast = document.createElement('div');
+  toast.className = 'achievement-toast';
+  toast.innerHTML = `<div class="achievement-icon">${icon}</div><div class="achievement-text"><div class="achievement-title">${title}</div><div class="achievement-desc">${desc}</div></div>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function updateScoreLive() {
+  const label = state.player === 'Charlie' ? 'elims' : 'mined';
+  document.getElementById('scoreLive').textContent = `${state.score} ${label} / ${state.attempted}`;
+  document.getElementById('streakText').textContent = state.streak > 0 ? `${state.streak} streak` : '';
+}
+
+// Input handlers
+document.getElementById('submitBtn').addEventListener('click', () => submitAnswer(false));
+document.getElementById('skipBtn').addEventListener('click', () => submitAnswer(true));
+document.getElementById('answerInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); submitAnswer(false); }
+});
+document.getElementById('answerInput').addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/[^0-9]/g, '');
+});
+
+// ===== END DRILL =====
+function endDrill() {
+  clearInterval(state.timerInterval);
+
+  // Save session
+  const session = {
+    date: new Date().toISOString(),
+    operation: state.operation,
+    level: state.level,
+    duration: state.totalTime,
+    score: state.score,
+    attempted: state.attempted,
+    accuracy: state.attempted > 0 ? Math.round((state.score / state.attempted) * 100) : 0,
+    bestStreak: state.bestStreak,
+    problems: state.problems
+  };
+  const sessions = loadSessions(state.player);
+  sessions.push(session);
+  saveSessions(state.player, sessions);
+
+  showResults(session);
+}
+
+function showResults(session) {
+  showScreen('resultsScreen');
+  const { score, attempted, bestStreak } = session;
+  const accuracy = attempted > 0 ? Math.round((score / attempted) * 100) : 0;
+  const P = PLAYERS[state.player];
+
+  // Header
+  document.getElementById('resultHeader').textContent = P.resultLabel;
+
+  // Victory text
+  const vt = document.getElementById('victoryText');
+  if (score >= 44) {
+    vt.textContent = state.player === 'Charlie' ? '#1 VICTORY ROYALE' : '💎 MASTERY ACHIEVED';
+    AudioEngine.play('mastery');
+    spawnConfetti();
+  } else if (score >= 30) {
+    vt.textContent = state.player === 'Charlie' ? 'TOP 10 FINISH' : '⭐ PROFICIENT';
+    AudioEngine.play('victory');
+  } else {
+    vt.textContent = state.player === 'Charlie' ? 'ELIMINATED' : 'KEEP MINING';
+  }
+
+  document.getElementById('resultScore').textContent = `${score} / ${attempted}`;
+
+  // Badge
+  const badgeEl = document.getElementById('resultBadge');
+  if (score >= 44) badgeEl.innerHTML = '<div class="result-badge badge-mastery">MASTERY PLUS</div>';
+  else if (score >= 30) badgeEl.innerHTML = '<div class="result-badge badge-proficient">PROFICIENT</div>';
+  else badgeEl.innerHTML = '<div class="result-badge badge-practice">KEEP PRACTICING</div>';
+
+  // Check personal best
+  const sessions = loadSessions(state.player);
+  const prevBest = sessions.slice(0, -1)
+    .filter(s => s.operation === state.operation)
+    .reduce((max, s) => Math.max(max, s.score), 0);
+  const isPB = score > prevBest && sessions.length > 1;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${accuracy}%</div><div class="stat-label">Accuracy</div></div>
+    <div class="stat-card"><div class="stat-value">${bestStreak}</div><div class="stat-label">Best Streak</div></div>
+    <div class="stat-card"><div class="stat-value">${state.totalTime}s</div><div class="stat-label">Duration</div></div>
+    <div class="stat-card"><div class="stat-value">${isPB ? '🏆 NEW!' : prevBest}</div><div class="stat-label">${isPB ? 'Personal Best!' : 'Previous Best'}</div></div>
+  `;
+
+  // Fastest
+  const fastest = state.problems.filter(p => p.correct).sort((a, b) => a.timeMs - b.timeMs).slice(0, 3);
+  const fastEl = document.getElementById('fastestList');
+  if (fastest.length) {
+    fastEl.innerHTML = `<div class="fastest-header">${state.player === 'Charlie' ? 'Fastest Eliminations' : 'Speed Mines'}</div>` +
+      fastest.map(p => `<div class="fastest-item"><span>${p.question} = ${p.answer}</span><span class="fastest-time">${(p.timeMs/1000).toFixed(2)}s</span></div>`).join('');
+  } else { fastEl.innerHTML = ''; }
+}
+
+function spawnConfetti() {
+  const colors = ['#ff0055','#00d4ff','#ffd700','#00e676','#a855f7','#ff6600'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = '-10px';
+    c.style.width = (Math.random() * 8 + 4) + 'px';
+    c.style.height = (Math.random() * 8 + 4) + 'px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+// Result actions
+document.getElementById('playAgainBtn').addEventListener('click', startCountdown);
+document.getElementById('changeSettingsBtn').addEventListener('click', () => showScreen('startScreen'));
+
+// ===== HISTORY =====
+let historyFilter = { player: null, operation: null };
+
+document.getElementById('historyBtn').addEventListener('click', () => {
+  historyFilter.player = state.player || 'Charlie';
+  historyFilter.operation = null;
+  renderHistory();
+  showScreen('historyScreen');
+});
+document.getElementById('historyBack').addEventListener('click', () => showScreen('startScreen'));
+
+function renderHistory() {
+  const sessions = loadSessions(historyFilter.player);
+  const filtered = historyFilter.operation ?
+    sessions.filter(s => s.operation === historyFilter.operation) : sessions;
+
+  // Filters
+  const filtersEl = document.getElementById('historyFilters');
+  const playerBtns = ['Charlie','Mae'].map(p =>
+    `<button class="filter-btn ${historyFilter.player === p ? 'active' : ''}" data-fp="${p}">${p}</button>`
+  ).join('');
+  const opBtns = ['all',...(PLAYERS[historyFilter.player]?.ops || [])].map(op =>
+    `<button class="filter-btn ${(op === 'all' && !historyFilter.operation) || historyFilter.operation === op ? 'active' : ''}" data-fo="${op}">${op === 'all' ? 'All' : OP_LABELS[op] || op}</button>`
+  ).join('');
+  filtersEl.innerHTML = playerBtns + opBtns;
+
+  filtersEl.querySelectorAll('[data-fp]').forEach(b => b.addEventListener('click', () => {
+    historyFilter.player = b.dataset.fp; historyFilter.operation = null; renderHistory();
+  }));
+  filtersEl.querySelectorAll('[data-fo]').forEach(b => b.addEventListener('click', () => {
+    historyFilter.operation = b.dataset.fo === 'all' ? null : b.dataset.fo; renderHistory();
+  }));
+
+  // Stats
+  const total = filtered.length;
+  const best = filtered.reduce((m, s) => Math.max(m, s.score), 0);
+  const avg = total > 0 ? Math.round(filtered.reduce((s, x) => s + x.score, 0) / total) : 0;
+  const masteries = filtered.filter(s => s.score >= 44).length;
+
+  document.getElementById('historyStats').innerHTML = `
+    <div class="history-stat"><div class="stat-value">${total}</div><div class="stat-label">Sessions</div></div>
+    <div class="history-stat"><div class="stat-value">${best}</div><div class="stat-label">Best</div></div>
+    <div class="history-stat"><div class="stat-value">${avg}</div><div class="stat-label">Average</div></div>
+    <div class="history-stat"><div class="stat-value">${masteries}</div><div class="stat-label">Mastery</div></div>
+  `;
+
+  // Chart
+  drawChart(filtered);
+
+  // Session list
+  const listEl = document.getElementById('sessionList');
+  const recent = filtered.slice(-30).reverse();
+  listEl.innerHTML = recent.map(s => {
+    const d = new Date(s.date);
+    const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const badge = s.score >= 44 ? 'badge-mastery' : s.score >= 30 ? 'badge-proficient' : 'badge-practice';
+    const label = s.score >= 44 ? 'M+' : s.score >= 30 ? 'P' : '';
+    return `<div class="session-item">
+      <span>${dateStr}</span>
+      <span style="color:var(--text-secondary)">${OP_LABELS[s.operation] || s.operation}</span>
+      <span class="session-score">${s.score}/${s.attempted}</span>
+      ${label ? `<span class="session-badge ${badge}">${label}</span>` : '<span></span>'}
+    </div>`;
+  }).join('');
+}
+
+function drawChart(sessions) {
+  const canvas = document.getElementById('historyChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = (rect.width - 24) * dpr;
+  canvas.height = 160 * dpr;
+  canvas.style.width = (rect.width - 24) + 'px';
+  canvas.style.height = '160px';
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width - 24, h = 160;
+  const pad = { top: 10, right: 10, bottom: 25, left: 35 };
+  const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (sessions.length < 2) {
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+    ctx.font = '13px ' + getComputedStyle(document.documentElement).getPropertyValue('--font');
+    ctx.textAlign = 'center';
+    ctx.fillText('Play more sessions to see trends', w / 2, h / 2);
+    return;
+  }
+
+  const recent = sessions.slice(-30);
+  const maxScore = Math.max(60, ...recent.map(s => s.score));
+
+  // Grid
+  ctx.strokeStyle = 'rgba(128,128,128,0.15)';
+  ctx.lineWidth = 1;
+  [30, 44].forEach(threshold => {
+    const y = pad.top + ch - (threshold / maxScore) * ch;
+    ctx.beginPath(); ctx.setLineDash([4, 4]);
+    ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = threshold === 44 ? 'rgba(255,215,0,0.5)' : 'rgba(0,230,118,0.4)';
+    ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(threshold === 44 ? 'Mastery' : 'Proficient', pad.left - 4, y + 3);
+  });
+
+  // Line
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  ctx.strokeStyle = accent; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  recent.forEach((s, i) => {
+    const x = pad.left + (i / (recent.length - 1)) * cw;
+    const y = pad.top + ch - (s.score / maxScore) * ch;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Dots
+  recent.forEach((s, i) => {
+    const x = pad.left + (i / (recent.length - 1)) * cw;
+    const y = pad.top + ch - (s.score / maxScore) * ch;
+    ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = s.score >= 44 ? '#ffd700' : s.score >= 30 ? '#00e676' : accent;
+    ctx.fill();
+  });
+
+  // X labels
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary');
+  ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  [0, Math.floor(recent.length / 2), recent.length - 1].forEach(i => {
+    if (!recent[i]) return;
+    const x = pad.left + (i / (recent.length - 1)) * cw;
+    const d = new Date(recent[i].date);
+    ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`, x, h - 4);
+  });
+}
+
+// ===== DATA EXPORT/IMPORT =====
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const data = {};
+  ['Charlie','Mae'].forEach(p => { data[p] = loadSessions(p); });
+  data.settings = loadSettings();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `math-drill-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      ['Charlie','Mae'].forEach(p => {
+        if (data[p]) {
+          const existing = loadSessions(p);
+          const existingDates = new Set(existing.map(s => s.date));
+          const newSessions = data[p].filter(s => !existingDates.has(s.date));
+          saveSessions(p, [...existing, ...newSessions].sort((a, b) => new Date(a.date) - new Date(b.date)));
+        }
+      });
+      renderHistory();
+      showAchievement('📦', 'Data Imported!', 'Sessions restored successfully');
+    } catch { alert('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===== PARENT MODE =====
+// Triple-tap the title to open parent mode (touch + click, debounced)
+let titleTaps = 0, titleTapTimer = null, titleTapLock = false;
+const titleEl = document.getElementById('titleText');
+titleEl.style.cursor = 'default';
+titleEl.style.userSelect = 'none';
+titleEl.style.webkitUserSelect = 'none';
+function handleTitleTap(e) {
+  if (e.type === 'click' && titleTapLock) return; // skip click after touch
+  if (e.type === 'touchend') { titleTapLock = true; setTimeout(() => titleTapLock = false, 400); }
+  titleTaps++;
+  clearTimeout(titleTapTimer);
+  titleTapTimer = setTimeout(() => { titleTaps = 0; }, 900);
+  if (titleTaps >= 3) { titleTaps = 0; openParentMode(); }
+}
+titleEl.addEventListener('touchend', handleTitleTap);
+titleEl.addEventListener('click', handleTitleTap);
+
+function openParentMode() {
+  const overlay = document.createElement('div');
+  overlay.className = 'parent-overlay';
+
+  const charlieSessions = loadSessions('Charlie');
+  const maeSessions = loadSessions('Mae');
+
+  overlay.innerHTML = `
+    <div class="parent-panel">
+      <div class="parent-title">🔒 Parent Mode</div>
+      <div class="parent-subtitle">Triple-tapped title to access. Kids won't find this.</div>
+      <div class="parent-btn" style="pointer-events:none;opacity:0.7">
+        Charlie: ${charlieSessions.length} sessions stored<br>
+        Mae: ${maeSessions.length} sessions stored
+      </div>
+      <button class="parent-btn" id="parentExport">⬇ Export all data (backup)</button>
+      <button class="parent-btn" id="parentImport">⬆ Import data from backup</button>
+      <button class="parent-btn danger" id="parentResetCharlie">🗑 Reset Charlie's history</button>
+      <button class="parent-confirm" id="confirmResetCharlie">Tap again to confirm — this cannot be undone</button>
+      <button class="parent-btn danger" id="parentResetMae">🗑 Reset Mae's history</button>
+      <button class="parent-confirm" id="confirmResetMae">Tap again to confirm — this cannot be undone</button>
+      <button class="parent-btn danger" id="parentResetAll">🗑 Reset ALL data</button>
+      <button class="parent-confirm" id="confirmResetAll">Tap again to confirm — this cannot be undone</button>
+      <button class="parent-close" id="parentClose">Close</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#parentClose').addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#parentExport').addEventListener('click', () => {
+    const data = {};
+    ['Charlie','Mae'].forEach(p => { data[p] = loadSessions(p); });
+    data.settings = loadSettings();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `math-drill-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  overlay.querySelector('#parentImport').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+    overlay.remove();
+  });
+
+  // Reset with confirmation pattern
+  function setupReset(btnId, confirmId, action) {
+    const btn = overlay.querySelector('#' + btnId);
+    const confirm = overlay.querySelector('#' + confirmId);
+    btn.addEventListener('click', () => {
+      confirm.classList.add('visible');
+      setTimeout(() => confirm.classList.remove('visible'), 4000);
+    });
+    confirm.addEventListener('click', () => {
+      action();
+      overlay.remove();
+      openParentMode(); // reopen to show updated counts
+    });
+  }
+
+  setupReset('parentResetCharlie', 'confirmResetCharlie', () => {
+    localStorage.removeItem('math-drill-Charlie');
+  });
+  setupReset('parentResetMae', 'confirmResetMae', () => {
+    localStorage.removeItem('math-drill-Mae');
+  });
+  setupReset('parentResetAll', 'confirmResetAll', () => {
+    localStorage.removeItem('math-drill-Charlie');
+    localStorage.removeItem('math-drill-Mae');
+    localStorage.removeItem('math-drill-settings');
+  });
+}
+
+// ===== INIT =====
+applyTheme('charlie');
+</script>
+</body>
+</html>
